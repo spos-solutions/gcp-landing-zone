@@ -132,6 +132,9 @@ collect_configuration() {
     
     echo ""
     print_info "GitHub Configuration"
+    echo ""
+    
+    read -p "Enter your GitHub username or organization: " GITHUB_OWNER
     
     # Check if repo name was provided as argument
     if [[ $# -ge 1 ]]; then
@@ -140,10 +143,7 @@ collect_configuration() {
     else
         read -p "Enter repository name (default: ${DEFAULT_REPO_NAME}): " REPO_NAME
         REPO_NAME=${REPO_NAME:-${DEFAULT_REPO_NAME}}
-    fime (default: gcp-networks): " NET_REPO
-    NET_REPO=${NET_REPO:-gcp-networks}
-    read -p "Enter projects repository name (default: gcp-projects): " PROJ_REPO
-     PROJ_REPO=${PROJ_REPO:-gcp-projects}
+    fi
     
     echo ""
     print_info "IAM Groups Configuration"
@@ -159,9 +159,9 @@ export BILLING_ACCOUNT="${BILLING_ACCOUNT}"
 export DEFAULT_REGION="${DEFAULT_REGION}"
 
 # GitHub Configuration
-export GITHUB_OWNER="$ (Monorepo)
 export GITHUB_OWNER="${GITHUB_OWNER}"
-export REPO_NAME="${REPO_NAME
+export REPO_NAME="${REPO_NAME}"
+
 # Domain
 export DOMAIN="${DOMAIN}"
 
@@ -201,8 +201,9 @@ validate_gcp_access() {
     
     # Validate billing account
     print_info "Validating billing account..."
-    if ! gcloud beta billing accounts describe "${BILLING_ACCOUNT}" &>/dev/null; then
+    if ! gcloud billing accounts describe "${BILLING_ACCOUNT}" &>/dev/null; then
         print_error "Cannot access billing account ${BILLING_ACCOUNT}"
+        print_info "Verify the Billing Account ID and your permissions"
         exit 1
     fi
     print_success "Billing account ${BILLING_ACCOUNT} is accessible"
@@ -296,19 +297,16 @@ groups = {
   }
 }
 
-# GitHub Actions Configuration
+# GitHub Actions Configuration (Monorepo)
 gh_repos = {
   owner        = "${GITHUB_OWNER}"
-  bootstrap    = "${BOOTSTRAP_REPO}"
-  organization = "${ORG_REPO}"
-  environments = "${ENV_REPO}"
-  networks     = "${NET_REPO}"
-  projects     = "${PROJ_REPO}"
-}REPO_NAME}"
+  bootstrap    = "${REPO_NAME}"
   organization = "${REPO_NAME}"
   environments = "${REPO_NAME}"
   networks     = "${REPO_NAME}"
-  projects     = "${REPO_NAME
+  projects     = "${REPO_NAME}"
+}
+EOF
     
     print_success "terraform.tfvars generated"
     print_warning "Remember to set: export TF_VAR_gh_token=\"your-github-pat\""

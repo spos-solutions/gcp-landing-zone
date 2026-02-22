@@ -21,7 +21,9 @@ locals {
   // The bootstrap module will enforce that only identities
   // in the list "org_project_creators" will have the Project Creator role,
   // so the granular service accounts for each step need to be added to the list.
+  // Also adding the authenticated user for initial bootstrap deployment.
   step_terraform_sa = [
+    "user:info@spossolutions.com",
     "serviceAccount:${google_service_account.terraform-env-sa["bootstrap"].email}",
     "serviceAccount:${google_service_account.terraform-env-sa["org"].email}",
     "serviceAccount:${google_service_account.terraform-env-sa["env"].email}",
@@ -38,9 +40,11 @@ resource "google_folder" "bootstrap" {
   display_name = "${var.folder_prefix}-bootstrap"
   parent       = local.parent
 }
-resource "random_id" "suffix" {
-  byte_length = 2
-}
+
+# random_id not needed - using fixed project IDs without suffix
+# resource "random_id" "suffix" {
+#   byte_length = 2
+# }
 
 module "seed_bootstrap" {
   source  = "terraform-google-modules/bootstrap/google"
@@ -48,7 +52,8 @@ module "seed_bootstrap" {
 
   org_id                         = var.org_id
   folder_id                      = google_folder.bootstrap.id
-  project_id                     = "${var.project_prefix}-b-seed-${random_id.suffix.hex}"
+  project_id                     = "${var.project_prefix}-b-seed-spos"
+  random_suffix                  = false
   state_bucket_name              = "${var.bucket_prefix}-${var.project_prefix}-b-seed-tfstate"
   force_destroy                  = var.bucket_force_destroy
   billing_account                = var.billing_account
