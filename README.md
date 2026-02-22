@@ -1,37 +1,169 @@
-# pbmm-on-gcp-onboarding
+# GCP Landing Zone
 
-This repository is used to create a Protected B Medium-Medium (PBMM) compliant Landing Zone on Google Cloud. 
+PBMM-compliant GCP landing zone deployed with Terraform and GitHub Actions.
 
-## 🚀 Quick Start - GitHub Actions Deployment
+> **CI/CD Configuration:** This repository uses **GitHub Actions** for automation.  
+> Cloud Build and Jenkins configurations are available but not used in this setup.  
+> See [docs/CICD-SETUP.md](./docs/CICD-SETUP.md) for details.
 
-**New to this repo?** → **[GETTING_STARTED.md](./GETTING_STARTED.md)** ← Start here!
+## 🚀 Quick Start
 
-One complete guide: setup to deployment in 60 minutes.
+**New to this repo?** → **[GETTING_STARTED.md](./GETTING_STARTED.md)** (60 min setup)
 
-### Key Points
-- ✅ **One repository** (monorepo approach)
-- ✅ **GitHub Actions** for automation
-- ✅ **Dual-SVPC networks** (simpler than hub-and-spoke)
-- ✅ **No on-prem** (skip Fortigate, VPN, Interconnect)
-- ✅ **Optional NAT** (skip if using serverless only)
-- ✅ **Cost: $0-10/month** (serverless) or **$80-90/month** (with VMs)
+### What This Deploys
 
-### More Resources
-- **[GETTING_STARTED.md](./GETTING_STARTED.md)** - Complete step-by-step guide
-- **[scripts/preflight-check.sh](./scripts/preflight-check.sh)** - Validate prerequisites
-- **[docs/technical-design-document.md](./docs/technical-design-document.md)** - Architecture details
+- ✅ Organization structure & folders
+- ✅ Dev + Prod environments  
+- ✅ Dual-SVPC networks (cloud-only)
+- ✅ GitHub Actions CI/CD
+- ✅ PBMM compliance policies
+
+### Cost
+
+- **$0-10/month** (serverless only)
+- **$70-90/month** (with VMs + NAT)
 
 ---
 
-Please refer to [Technical Design Documentation](./docs/technical-design-document.md) for the full detailed design. 
+## 📚 Documentation
 
-Pour les documents fourni en français, veuillez vous référer à la [Documentation de conception technique](./docs/document-de-conception-technique.md).
+### Getting Started
+| Document | Purpose |
+|----------|---------|
+| **[Quick Start (WIF)](./docs/QUICKSTART-WIF.md)** | ⚡ 30-min setup with GitHub Actions |
+| **[Getting Started](./GETTING_STARTED.md)** | Complete deployment guide |
+| **[Next Steps](./NEXT_STEPS.md)** | After setup instructions |
 
-## ADO Automation 
+### Setup & Configuration
+| Document | Purpose |
+|----------|---------|
+| **[GitHub Security Setup](./docs/GITHUB-SECURITY.md)** | Secure repos & branch protection |
+| **[Bootstrap WIF Setup](./docs/BOOTSTRAP-WIF-SETUP.md)** | Workload Identity Federation config |
+| **[Monorepo Approach](./docs/MONOREPO-APPROACH.md)** | Why and how we use monorepo |
+| **[CI/CD Configuration](./docs/CICD-SETUP.md)** | GitHub Actions configuration |
+| **[Workflow Consolidation](./docs/WORKFLOWS-CONSOLIDATED.md)** | Understanding workflows |
 
-A end-to-end ADO automation has been provided as part of this repo.  The [ADO Pipeline Documentation](./docs/ado-pipeline-documentation.md) comprehensively outlines the Azure DevOps pipeline based deployment option, from its architectural foundation to execution and troubleshooting. 
+### Architecture & Operations
+| Document | Purpose |
+|----------|---------|
+| **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** | System design overview |
+| **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** | Detailed deployment steps |
+| **[docs/WORKFLOWS.md](./docs/WORKFLOWS.md)** | GitHub Actions explained |
+| **[docs/COST.md](./docs/COST.md)** | Cost breakdown & optimization |
+| **[docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** | Common issues & solutions |
+| **[docs/addressing-plan/](./docs/addressing-plan/)** | IP addressing documentation |
 
-Pour les documents fourni en français, veuillez vous référer à la [Documentation du pipeline ADO](./docs/documentation-du-pipeline-ado.md).
+---
+
+## Prerequisites
+
+```bash
+# Required tools
+brew install google-cloud-sdk terraform
+
+# Authenticate
+gcloud auth login
+gcloud auth application-default login
+
+# Set variables
+export ORG_ID="123456789012"
+export BILLING_ACCOUNT="ABCDEF-123456"
+export GITHUB_ORG="spos-solutions"
+export REPO_NAME="gcp-landing-zone"  # Single monorepo
+
+# Validate environment
+./scripts/preflight-check.sh
+```
+
+---
+
+## Quick Deploy
+
+```bash
+# 1. Push to GitHub (see docs/NEXT_STEPS.md)
+git remote add origin git@github.com:spos-solutions/gcp-landing-zone.git
+git push -u origin main production
+git checkout -b plan && git push -u origin plan
+
+# 2. Deploy bootstrap manually
+cd 0-bootstrap/envs/shared
+# Configure terraform.tfvars (see docs/GETTING_STARTED.md)
+terraform init && terraform apply
+
+# 3. Deploy remaining stages via GitHub Actions
+# Create PR: plan → production
+# Review terraform plans
+# Merge PR → Auto-deploys
+```
+
+Full instructions: **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)**
+
+---
+
+## Repository Structure
+
+```
+├── 0-bootstrap/        Foundation & CI/CD setup (manual deploy)
+├── 1-org/             Organization policies & folders
+├── 2-environments/    Dev/Prod environment structure
+├── 3-networks/        Dual-SVPC networks
+├── 4-projects/        Application projects
+├── .github/workflows/ GitHub Actions (plan + apply)
+├── policy-library/    PBMM compliance policies
+├── scripts/           Helper scripts
+└── docs/             Documentation
+```
+
+---
+
+## Deployment Stages
+
+| Stage | Purpose | Deploy Method |
+|-------|---------|---------------|
+| **0-bootstrap** | Foundation, state bucket, CI/CD | Manual (terraform apply) |
+| **1-org** | Organization structure | GitHub Actions |
+| **2-environments** | Environment folders | GitHub Actions |
+| **3-networks** | VPCs and networking | GitHub Actions |
+| **4-projects** | Application projects | GitHub Actions |
+
+---
+
+## What's Included
+
+✅ **Organization Setup**
+- Org policies & compliance (PBMM)
+- Folder structure (dev/prod)
+- Centralized logging & security
+
+✅ **Networking**
+- Dual-SVPC architecture
+- Private Google Access
+- Optional Cloud NAT
+
+✅ **CI/CD**
+- GitHub Actions workflows
+- Workload Identity Federation (no keys!)
+- Automated plan & apply
+
+✅ **Compliance**
+- PBMM policy enforcement
+- Audit logging
+- Encryption at rest
+
+---
+
+## Support
+
+- **Issues?** Check [docs/WORKFLOWS.md](docs/WORKFLOWS.md) troubleshooting section
+- **Costs?** See [docs/COSTS.md](docs/COSTS.md)
+- **Architecture questions?** Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+---
+
+## License
+
+Apache 2.0 - See [LICENSE](LICENSE)
+
 
 
 # Terraform Example Foundation (TEF)

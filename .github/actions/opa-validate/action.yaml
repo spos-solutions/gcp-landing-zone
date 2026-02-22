@@ -1,0 +1,82 @@
+name: 'OPA Policy Validation'
+description: 'Validate Terraform plans against OPA/Rego policies'
+
+inputs:
+  terraform-plan-file:
+    description: 'Path to the terraform plan file (tfplan)'
+    required: true
+  working-directory:
+    description: 'Working directory containing the plan file'
+    required: true
+  policy-library-path:
+    description: 'Path to policy library'
+    required: false
+    default: 'policy-library'
+  fail-on-violation:
+    description: 'Fail the workflow if violations are found'
+    required: false
+    default: 'true'
+
+outputs:
+  violations-found:
+    description: 'Whether policy violations were found'
+    value: ${{ steps.validate.outputs.violations }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install OPA
+      shell: bash
+      run: |
+        curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+        chmod +x opa
+        sudo mv opa /usr/local/bin/
+        opa version
+
+    - name: Convert Terraform plan to JSON
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        terraform show -json ${{ inputs.terraform-plan-file }} > tfplan.json
+
+    - name: Validate with OPA
+      id: validate
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "🔍 Validating Terraform plan against policy library..."
+        
+        # Run OPA evaluation
+        VIOLATIONS=$(opa eval \
+          --data ${{ github.workspace }}/${{ inputs.policy-library-path }}/lib \
+          --data ${{ github.workspace }}/${{ inputs.policy-library-path }}/policies \
+          --input tfplan.json \
+          --format pretty \
+          'data.validator.gcp.lib' \
+          2>&1 || echo "")
+        
+        # Check if there are any deny rules triggered
+        # This is a simplified check - adjust based on your policy structure
+        if [ -n "$VIOLATIONS" ]; then
+          echo "⚠️  Policy evaluation output:"
+          echo "$VIOLATIONS"
+          echo "violations=true" >> $GITHUB_OUTPUT
+        else
+          echo "✅ No policy violations found"
+          echo "violations=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload plan JSON as artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: terraform-plan-${{ github.run_id }}
+        path: ${{ inputs.working-directory }}/tfplan.json
+        retention-days: 30
+
+    - name: Fail on violations
+      shell: bash
+      if: inputs.fail-on-violation == 'true' && steps.validate.outputs.violations == 'true'
+      run: |
+        echo "❌ Policy violations detected. Please review and fix the violations."
+        exit 1

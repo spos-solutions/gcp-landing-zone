@@ -1,0 +1,246 @@
+name: '4-projects'
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '4-projects/**'
+      - 'policy-library/**'
+      - '.github/workflows/4-projects.yaml'
+  push:
+    branches:
+      - main
+    paths:
+      - '4-projects/**'
+      - 'policy-library/**'
+      - '.github/workflows/4-projects.yaml'
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  STAGE: '4-projects'
+  TF_VERSION: '1.3.0'
+
+jobs:
+  shared:
+    name: 'Shared Projects'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'production' || null }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_PROJECTS }}
+          access_token_lifetime: '3600s'
+
+      - name: Terraform Init
+        working-directory: 4-projects/business_unit_1/shared
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: 4-projects/business_unit_1/shared
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: 4-projects/business_unit_1/shared
+        run: |
+          terraform plan -input=false -out=tfplan
+          terraform show -no-color tfplan > plan_output.txt
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+      - name: OPA Policy Validation
+        uses: ./.github/actions/opa-validate
+        with:
+          terraform-plan-file: 'tfplan'
+          working-directory: '4-projects/business_unit_1/shared'
+          policy-library-path: 'policy-library'
+          fail-on-violation: 'true'
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: 4-projects/business_unit_1/shared
+        run: terraform apply -auto-approve -input=false tfplan
+
+  development:
+    name: 'Development Projects'
+    runs-on: ubuntu-latest
+    needs: shared
+    environment: ${{ github.event_name == 'push' && 'production' || null }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_PROJECTS }}
+          access_token_lifetime: '3600s'
+
+      - name: Terraform Init
+        working-directory: 4-projects/business_unit_1/development
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: 4-projects/business_unit_1/development
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: 4-projects/business_unit_1/development
+        run: |
+          terraform plan -input=false -out=tfplan
+          terraform show -no-color tfplan > plan_output.txt
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+      - name: OPA Policy Validation
+        uses: ./.github/actions/opa-validate
+        with:
+          terraform-plan-file: 'tfplan'
+          working-directory: '4-projects/business_unit_1/development'
+          policy-library-path: 'policy-library'
+          fail-on-violation: 'true'
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: 4-projects/business_unit_1/development
+        run: terraform apply -auto-approve -input=false tfplan
+
+  nonproduction:
+    name: 'Non-Production Projects'
+    runs-on: ubuntu-latest
+    needs: development
+    environment: ${{ github.event_name == 'push' && 'production' || null }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_PROJECTS }}
+          access_token_lifetime: '3600s'
+
+      - name: Terraform Init
+        working-directory: 4-projects/business_unit_1/nonproduction
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: 4-projects/business_unit_1/nonproduction
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: 4-projects/business_unit_1/nonproduction
+        run: |
+          terraform plan -input=false -out=tfplan
+          terraform show -no-color tfplan > plan_output.txt
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+      - name: OPA Policy Validation
+        uses: ./.github/actions/opa-validate
+        with:
+          terraform-plan-file: 'tfplan'
+          working-directory: '4-projects/business_unit_1/nonproduction'
+          policy-library-path: 'policy-library'
+          fail-on-violation: 'true'
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: 4-projects/business_unit_1/nonproduction
+        run: terraform apply -auto-approve -input=false tfplan
+
+  production:
+    name: 'Production Projects'
+    runs-on: ubuntu-latest
+    needs: nonproduction
+    environment: ${{ github.event_name == 'push' && 'production' || null }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_PROJECTS }}
+          access_token_lifetime: '3600s'
+
+      - name: Terraform Init
+        working-directory: 4-projects/business_unit_1/production
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: 4-projects/business_unit_1/production
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: 4-projects/business_unit_1/production
+        run: |
+          terraform plan -input=false -out=tfplan
+          terraform show -no-color tfplan > plan_output.txt
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+      - name: OPA Policy Validation
+        uses: ./.github/actions/opa-validate
+        with:
+          terraform-plan-file: 'tfplan'
+          working-directory: '4-projects/business_unit_1/production'
+          policy-library-path: 'policy-library'
+          fail-on-violation: 'true'
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: 4-projects/business_unit_1/production
+        run: terraform apply -auto-approve -input=false tfplan
