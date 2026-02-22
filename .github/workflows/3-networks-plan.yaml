@@ -1,0 +1,106 @@
+name: '3-networks-plan'
+
+on:
+  pull_request:
+    branches:
+      - production
+    paths:
+      - '3-networks/**'
+      - '.github/workflows/3-networks-*.yaml'
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  STAGE: '3-networks'
+  TF_VERSION: '1.3.0'
+
+jobs:
+  plan-shared:
+    name: 'Plan - Shared (DNS/Interconnect)'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_NETWORKS }}
+          access_token_lifetime: '3600s'
+      - name: Terraform Init
+        working-directory: 3-networks/envs/shared
+        run: terraform init
+      - name: Terraform Plan
+        working-directory: 3-networks/envs/shared
+        run: terraform plan -input=false -out=tfplan
+
+  plan-development:
+    name: 'Plan - Development Networks'
+    runs-on: ubuntu-latest
+    needs: plan-shared
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_NETWORKS }}
+          access_token_lifetime: '3600s'
+      - name: Terraform Init
+        working-directory: 3-networks/envs/development
+        run: terraform init
+      - name: Terraform Plan
+        working-directory: 3-networks/envs/development
+        run: terraform plan -input=false -out=tfplan
+
+  plan-nonproduction:
+    name: 'Plan - Non-Production Networks'
+    runs-on: ubuntu-latest
+    needs: plan-shared
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_NETWORKS }}
+          access_token_lifetime: '3600s'
+      - name: Terraform Init
+        working-directory: 3-networks/envs/nonproduction
+        run: terraform init
+      - name: Terraform Plan
+        working-directory: 3-networks/envs/nonproduction
+        run: terraform plan -input=false -out=tfplan
+
+  plan-production:
+    name: 'Plan - Production Networks'
+    runs-on: ubuntu-latest
+    needs: plan-shared
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_NAME }}
+          service_account: ${{ secrets.TF_SA_NETWORKS }}
+          access_token_lifetime: '3600s'
+      - name: Terraform Init
+        working-directory: 3-networks/envs/production
+        run: terraform init
+      - name: Terraform Plan
+        working-directory: 3-networks/envs/production
+        run: terraform plan -input=false -out=tfplan

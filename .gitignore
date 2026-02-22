@@ -1,0 +1,54 @@
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/*.tfplan
+**/.terraformrc
+**/crash.log
+
+# Your custom configurations
+**/terraform.tfvars
+!**/terraform.example.tfvars
+*.auto.tfvars
+!*.auto.example.tfvars
+!*.auto.mod.tfvars
+
+# Local overrides
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# CLI config files
+**/.terraformrc
+**/terraform.rc
+
+# Sensitive files
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local development
+local-overrides/
+.env
+.env.local
+
+# Logs
+*.log
+
+# Build artifacts
+build/
+dist/

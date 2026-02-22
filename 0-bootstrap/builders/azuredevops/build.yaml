@@ -1,0 +1,92 @@
+name: gcloud-$(Date:yy).$(Date:MM).0.$(BuildID)-$(Date:yyyyMMdd)-$(Date:HHmm)
+trigger:
+  branches:
+    include:
+    - plan
+    - shared
+    - production
+
+variables:
+- name: 'system.debug'
+  value: 'true'
+- group: var-group
+- name: 'branch'
+  value: $[replace(variables['Build.SourceBranch'], 'refs/heads/', '')]
+- name: 'repo'
+  value: $(Build.Repository.Name)
+- name: 'isPlan'
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/plan')]
+- name: 'isProduction'
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/production')]
+- name: 'isDevelopment'
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/development')]
+- name: 'isNonProduction'
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/nonproduction')]
+- name: isApply
+  value: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/production'), eq(variables['Build.SourceBranch'], 'refs/heads/development'), eq(variables['Build.SourceBranch'], 'refs/heads/nonproduction') )]
+
+stages:
+- stage: 'Build'
+  jobs:
+  - job: 'Build'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: GoogleCloudSdkInstaller@0
+      inputs:
+        version: '502.0.0'
+
+    - task: Bash@3
+      displayName: Login
+      inputs:
+        targetType: 'inline'
+        script: |
+          export TOKEN=$(curl -X POST -d "grant_type=client_credentials&client_id=$(applicationId)&client_secret=$(clientSecret)&resource=https%3A%2F%2Fmanagement.azure.com%2F" \
+          https://login.microsoftonline.com/$(tenantId)/oauth2/token)
+
+          echo $TOKEN > ./response.json
+
+          export SAVE_PATH=$(pwd)
+          export WIF_PROVIDER=$(wifProviderName)
+          export SERVICE_ACCOUNT_LIST='$(serviceAccountList)'
+          export SERVICE_ACCOUNT=$(echo $SERVICE_ACCOUNT_LIST | jq -c -r 'with_entries(select(.key == "$(repo)")) | to_entries[] | .value')
+
+          echo $SERVICE_ACCOUNT
+
+          gcloud iam workload-identity-pools create-cred-config "${WIF_PROVIDER}" \
+          --service-account="${SERVICE_ACCOUNT}" \
+          --output-file="${SAVE_PATH}"/cred.json \
+          --credential-source-file="${SAVE_PATH}"/response.json \
+          --credential-source-type="json" \
+          --credential-source-field-name="access_token"
+
+          gcloud auth login --cred-file="${SAVE_PATH}"/cred.json --update-adc
+
+          gcloud config set project $(projectName)
+
+    - task: Bash@3
+      displayName: Plan
+      condition: eq(variables['isPlan'], true)
+      inputs:
+        targetType: 'inline'
+        script: |
+          
+          export SAVE_PATH=$(pwd)
+          export GOOGLE_APPLICATION_CREDENTIALS="${SAVE_PATH}/cred.json"
+
+          ./tf-wrapper.sh plan_validate_all
+
+    - task: Bash@3
+      displayName: Apply
+      condition: eq(variables['isApply'], true)
+      inputs:
+        targetType: 'inline'
+        script: |
+
+          export SAVE_PATH=$(pwd)
+          export GOOGLE_APPLICATION_CREDENTIALS="${SAVE_PATH}/cred.json"
+
+          ./tf-wrapper.sh init $(branch)
+          ./tf-wrapper.sh plan $(branch)
+          ./tf-wrapper.sh apply $(branch)
+
