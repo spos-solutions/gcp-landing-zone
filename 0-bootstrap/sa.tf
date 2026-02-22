@@ -138,7 +138,7 @@ locals {
   }
 
   bootstrap_projects = {
-    "seed" = module.seed_bootstrap.seed_project_id,
+    "seed" = google_project.seed_bootstrap.project_id,
     "cicd" = local.cicd_project_id,
   }
 }
@@ -146,7 +146,7 @@ locals {
 resource "google_service_account" "terraform-env-sa" {
   for_each = local.granular_sa
 
-  project      = module.seed_bootstrap.seed_project_id
+  project      = google_project.seed_bootstrap.project_id
   account_id   = "sa-terraform-${each.key}"
   display_name = each.value
 }
@@ -177,7 +177,7 @@ module "seed_project_iam_member" {
 
   member      = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
   parent_type = "project"
-  parent_id   = module.seed_bootstrap.seed_project_id
+  parent_id   = google_project.seed_bootstrap.project_id
   roles       = each.value
 }
 

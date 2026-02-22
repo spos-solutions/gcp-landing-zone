@@ -21,7 +21,7 @@ provider "github" {
 }
 
 locals {
-  cicd_project_id = module.gh_cicd.project_id
+  cicd_project_id = google_project.gh_cicd.project_id
 
   gh_config = {
     "bootstrap" = var.gh_repos.bootstrap,
@@ -39,7 +39,7 @@ locals {
   }
 
   commom_secrets = {
-    "PROJECT_ID" : module.gh_cicd.project_id,
+    "PROJECT_ID" : google_project.gh_cicd.project_id,
     "WIF_PROVIDER_NAME" : module.gh_oidc.provider_name,
     "TF_BACKEND" : module.seed_bootstrap.gcs_bucket_tfstate,
     "TF_VAR_gh_token": var.gh_token,
@@ -68,16 +68,26 @@ locals {
 
 }
 
-module "gh_cicd" {
-  source  = "terraform-google-modules/project-factory/google"
-  version = "~> 12.0"
+# Create CICD project directly to avoid random_id issues
+resource "google_project" "gh_cicd" {
+  name            = "${var.project_prefix}-b-cicd-wif-gha"
+  project_id      = "${var.project_prefix}-b-cicd-wif-gha"
+  folder_id       = google_folder.bootstrap.id
+  billing_account = var.billing_account
 
-  name              = "${var.project_prefix}-b-cicd-wif-gh"
-  random_project_id = false
-  org_id            = var.org_id
-  folder_id         = google_folder.bootstrap.id
-  billing_account   = var.billing_account
-  activate_apis = [
+  labels = {
+    environment       = "bootstrap"
+    application_name  = "cicd-wif-gha"
+    billing_code      = "1234"
+    primary_contact   = "example1"
+    secondary_contact = "example2"
+    business_code     = "shared"
+    env_code          = "b"
+  }
+}
+
+resource "google_project_service" "gh_cicd_apis" {
+  for_each = toset([
     "compute.googleapis.com",
     "admin.googleapis.com",
     "iam.googleapis.com",
@@ -86,17 +96,51 @@ module "gh_cicd" {
     "serviceusage.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "iamcredentials.googleapis.com",
-  ]
+  ])
+
+  project = google_project.gh_cicd.project_id
+  service = each.value
+
+  disable_dependent_services = false
+  disable_on_destroy         = false
 }
+
+# module "gh_cicd" {
+#   source  = "terraform-google-modules/project-factory/google"
+#   version = "~> 12.0"
+#
+#   name              = "${var.project_prefix}-b-cicd-wif-gha"
+#   project_id        = "${var.project_prefix}-b-cicd-wif-gha"
+#   random_project_id = false
+#   org_id            = var.org_id
+#   folder_id         = google_folder.bootstrap.id
+#   billing_account   = var.billing_account
+#   activate_apis = [
+#     "compute.googleapis.com",
+#     "admin.googleapis.com",
+#     "iam.googleapis.com",
+#     "billingbudgets.googleapis.com",
+#     "cloudbilling.googleapis.com",
+#     "serviceusage.googleapis.com",
+#     "cloudresourcemanager.googleapis.com",
+#     "iamcredentials.googleapis.com",
+#   ]
+#
+#   # Prevent random_id creation by not using random_project_id logic
+#   generate_project_id = false
+# }
 
 module "gh_oidc" {
   source = "terraform-google-modules/github-actions-runners/google//modules/gh-oidc"
   version = "~> 3.1"
 
-  project_id  = module.gh_cicd.project_id
+  project_id  = google_project.gh_cicd.project_id
   pool_id     = "foundation-pool"
   provider_id = "foundation-gh-provider"
   sa_mapping  = local.sa_mapping
+  attribute_condition = "attribute.repository.startsWith(\"spos-solutions/\")"
+
+  depends_on = [google_project_service.gh_cicd_apis]
 }
 
 resource "github_actions_secret" "secrets" {

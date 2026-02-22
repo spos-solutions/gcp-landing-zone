@@ -22,13 +22,10 @@ locals {
   // in the list "org_project_creators" will have the Project Creator role,
   // so the granular service accounts for each step need to be added to the list.
   // Also adding the authenticated user for initial bootstrap deployment.
+  // Note: Using only bootstrap SA initially to avoid dependency issues
   step_terraform_sa = [
     "user:info@spossolutions.com",
     "serviceAccount:${google_service_account.terraform-env-sa["bootstrap"].email}",
-    "serviceAccount:${google_service_account.terraform-env-sa["org"].email}",
-    "serviceAccount:${google_service_account.terraform-env-sa["env"].email}",
-    "serviceAccount:${google_service_account.terraform-env-sa["net"].email}",
-    "serviceAccount:${google_service_account.terraform-env-sa["proj"].email}",
   ]
   parent = var.parent_folder != "" ? "folders/${var.parent_folder}" : "organizations/${var.org_id}"
   org_admins_org_iam_permissions = var.org_policy_admin_role == true ? [
@@ -46,19 +43,82 @@ resource "google_folder" "bootstrap" {
 #   byte_length = 2
 # }
 
+# Create seed project directly to avoid random_id issues
+resource "google_project" "seed_bootstrap" {
+  name            = "${var.project_prefix}-b-seed-spos"
+  project_id      = "${var.project_prefix}-b-seed-spos"
+  folder_id       = google_folder.bootstrap.id
+  billing_account = var.billing_account
+
+  labels = {
+    environment       = "bootstrap"
+    application_name  = "seed-bootstrap"
+    billing_code      = "1234"
+    primary_contact   = "example1"
+    secondary_contact = "example2"
+    business_code     = "shared"
+    env_code          = "b"
+  }
+}
+
+resource "google_project_service" "seed_bootstrap_apis" {
+  for_each = toset([
+    "serviceusage.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "cloudkms.googleapis.com",
+    "compute.googleapis.com",
+    "logging.googleapis.com",
+    "bigquery.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "cloudbilling.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "iam.googleapis.com",
+    "admin.googleapis.com",
+    "appengine.googleapis.com",
+    "storage-api.googleapis.com",
+    "monitoring.googleapis.com",
+    "pubsub.googleapis.com",
+    "securitycenter.googleapis.com",
+    "accesscontextmanager.googleapis.com",
+    "billingbudgets.googleapis.com",
+    "essentialcontacts.googleapis.com",
+    "assuredworkloads.googleapis.com",
+    "cloudasset.googleapis.com",
+    "cloudidentity.googleapis.com",
+    "networksecurity.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "bigqueryconnection.googleapis.com",
+    "bigquerydatapolicy.googleapis.com",
+    "bigquerydatatransfer.googleapis.com",
+    "bigquerymigration.googleapis.com",
+    "bigqueryreservation.googleapis.com",
+    "bigquerystorage.googleapis.com",
+    "securitycentermanagement.googleapis.com"
+  ])
+
+  project = google_project.seed_bootstrap.project_id
+  service = each.value
+
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
 module "seed_bootstrap" {
   source  = "terraform-google-modules/bootstrap/google"
   version = "~> 7.0"
 
   org_id                         = var.org_id
   folder_id                      = google_folder.bootstrap.id
-  project_id                     = "${var.project_prefix}-b-seed-spos"
+  project_id                     = google_project.seed_bootstrap.project_id
   random_suffix                  = false
   state_bucket_name              = "${var.bucket_prefix}-${var.project_prefix}-b-seed-tfstate"
   force_destroy                  = var.bucket_force_destroy
   billing_account                = var.billing_account
-  group_org_admins               = var.groups.required_groups.group_org_admins
-  group_billing_admins           = var.groups.required_groups.group_billing_admins
+  # Temporarily disable group IAM until groups are created
+  # group_org_admins               = var.groups.required_groups.group_org_admins
+  # group_billing_admins           = var.groups.required_groups.group_billing_admins
+  group_org_admins               = ""
+  group_billing_admins           = ""
   default_region                 = var.default_region
   org_project_creators           = local.step_terraform_sa
   sa_enable_impersonation        = true

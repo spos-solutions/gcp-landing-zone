@@ -39,6 +39,8 @@ PBMM-compliant GCP landing zone deployed with Terraform and GitHub Actions.
 |----------|---------|
 | **[GitHub Security Setup](./docs/GITHUB-SECURITY.md)** | Secure repos & branch protection |
 | **[Bootstrap WIF Setup](./docs/BOOTSTRAP-WIF-SETUP.md)** | Workload Identity Federation config |
+| **[Naming Convention](./docs/NAMING-CONVENTION.md)** | GCP resource naming standards |
+| **[Naming Quick Reference](./docs/NAMING-QUICKREF.md)** | Quick naming patterns reference |
 | **[Monorepo Approach](./docs/MONOREPO-APPROACH.md)** | Why and how we use monorepo |
 | **[CI/CD Configuration](./docs/CICD-SETUP.md)** | GitHub Actions configuration |
 | **[Workflow Consolidation](./docs/WORKFLOWS-CONSOLIDATED.md)** | Understanding workflows |

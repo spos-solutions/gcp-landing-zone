@@ -16,7 +16,7 @@
 
 output "seed_project_id" {
   description = "Project where service accounts and core APIs will be enabled."
-  value       = module.seed_bootstrap.seed_project_id
+  value       = google_project.seed_bootstrap.project_id
 }
 
 output "bootstrap_step_terraform_service_account_email" {
@@ -140,7 +140,7 @@ output "optional_groups" {
 # Un-comment github_bootstrap and its outputs if you want to use GitHub Actions instead of Cloud Build
 output "cicd_project_id" {
   description = "Project where the CI/CD infrastructure for GitHub Action resides."
-  value       = module.gh_cicd.project_id
+  value       = google_project.gh_cicd.project_id
 }
 
 output "projects_gcs_bucket_tfstate" {
