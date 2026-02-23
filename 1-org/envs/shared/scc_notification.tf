@@ -19,15 +19,17 @@
 *****************************************/
 
 locals {
-  scc_notification_suffix = var.create_unique_scc_notification ? "-${random_string.scc_notification_key_suffix.result}" : ""
+  scc_notification_suffix = var.enable_scc_notification && var.create_unique_scc_notification ? "-${random_string.scc_notification_key_suffix[0].result}" : ""
   scc_notification_name   = "${var.scc_notification_name}${local.scc_notification_suffix}"
 }
 resource "random_string" "scc_notification_key_suffix" {
+  count   = var.enable_scc_notification ? 1 : 0
   length  = 8
   special = false
   upper   = false
 }
 resource "google_pubsub_topic" "scc_notification_topic" {
+  count   = var.enable_scc_notification ? 1 : 0
   name    = "top-scc-notification"
   project = module.scc_notifications.project_id
 
@@ -42,16 +44,18 @@ resource "google_pubsub_topic" "scc_notification_topic" {
 }
 
 resource "google_pubsub_subscription" "scc_notification_subscription" {
+  count   = var.enable_scc_notification ? 1 : 0
   name    = "sub-scc-notification"
-  topic   = google_pubsub_topic.scc_notification_topic.name
+  topic   = google_pubsub_topic.scc_notification_topic[0].name
   project = module.scc_notifications.project_id
 }
 
 resource "google_scc_notification_config" "scc_notification_config" {
+  count        = var.enable_scc_notification ? 1 : 0
   config_id    = local.scc_notification_name
   organization = local.org_id
   description  = "SCC Notification for all active findings"
-  pubsub_topic = google_pubsub_topic.scc_notification_topic.id
+  pubsub_topic = google_pubsub_topic.scc_notification_topic[0].id
 
   streaming_config {
     filter = var.scc_notification_filter

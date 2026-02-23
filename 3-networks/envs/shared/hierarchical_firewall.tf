@@ -15,6 +15,7 @@
  */
 
 module "hierarchical_firewall_policy" {
+  count  = 0
   source = "../../modules/hierarchical_firewall_policy/"
 
   parent = local.common_folder_name

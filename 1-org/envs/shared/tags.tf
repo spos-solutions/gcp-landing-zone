@@ -82,6 +82,6 @@ resource "google_tags_tag_binding" "network_folder" {
 }
 
 resource "google_tags_tag_binding" "bootstrap_folder" {
-  parent    = "//cloudresourcemanager.googleapis.com/${local.bootstrap_folder_name}"
+  parent    = "//cloudresourcemanager.googleapis.com/folders/${local.bootstrap_folder_name}"
   tag_value = google_tags_tag_value.tag_values["environment_bootstrap"].id
 }

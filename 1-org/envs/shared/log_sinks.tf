@@ -64,12 +64,12 @@ module "logs_export" {
   /******************************************
     Send logs to Pub\Sub
   *****************************************/
-  pubsub_options = {
+  pubsub_options = var.enable_pubsub_log_sink ? {
     logging_sink_filter = local.logs_filter
     logging_sink_name   = "sk-c-logging-pub"
     topic_name          = "tp-org-logs-${random_string.suffix.result}"
     create_subscriber   = true
-  }
+  } : null
 
   /******************************************
     Send logs to Logging project
@@ -80,8 +80,8 @@ module "logs_export" {
     log_bucket_id              = "AggregatedLogs"
     log_bucket_description     = "Project destination log bucket for aggregated logs"
     location                   = local.default_region
-    linked_dataset_id          = "ds_c_prj_aggregated_logs_analytics"
-    linked_dataset_description = "Project destination BigQuery Dataset for Logbucket analytics"
+    linked_dataset_id          = var.enable_bigquery_log_sink ? "ds_c_prj_aggregated_logs_analytics" : null
+    linked_dataset_description = var.enable_bigquery_log_sink ? "Project destination BigQuery Dataset for Logbucket analytics" : null
   }
 }
 

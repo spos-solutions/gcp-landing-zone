@@ -21,7 +21,7 @@ essential_contacts_domains_to_allow = ["@DOMAIN"]
 
 scc_notification_name = "scc-notify"
 
-remote_state_bucket = "REMOTE_STATE_BUCKET"
+remote_state_bucket = "bkt-spos-prj-b-seed-tfstate"
 
 //scc_notification_filter = "state=\\\"ACTIVE\\\""
 

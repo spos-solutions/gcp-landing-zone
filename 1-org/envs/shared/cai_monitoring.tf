@@ -25,6 +25,7 @@ module "kms" {
   prevent_destroy = !var.cai_monitoring_kms_force_destroy
 }
 
+/*
 module "cai_monitoring" {
   source = "../../modules/cai-monitoring"
 
@@ -38,3 +39,4 @@ module "cai_monitoring" {
 
   depends_on = [ module.scc_notifications ]
 }
+*/

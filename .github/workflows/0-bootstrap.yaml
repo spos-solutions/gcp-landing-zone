@@ -117,4 +117,4 @@ jobs:
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: ${{ env.STAGE_DIR }}
-        run: terraform apply -auto-approve -input=false tfplan
+        run: terraform apply -auto-approve -input=false -var 'setup_github_secrets=false' tfplan

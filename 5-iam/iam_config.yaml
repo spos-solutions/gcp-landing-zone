@@ -1,0 +1,26 @@
+# IAM Configuration File
+
+# Organization-level Roles Assignment
+org_roles:
+  # Example: Granting Org Admin Viewer to security group
+  - role: "roles/resourcemanager.organizationViewer"
+    members:
+      - "group:gcp-security-admins@example.com"
+  
+  # Example: Granting Billing Viewer to finance team
+  - role: "roles/billing.viewer"
+    members:
+      - "group:billing-admins@example.com"
+
+# Custom IAM Permission Definitions
+custom_roles:
+  # Example: Custom role for auditing
+  - id: "customAuditRole"
+    title: "Custom Audit Role"
+    description: "Role for internal auditors with specific read permissions"
+    permissions:
+      - "iam.roles.list"
+      - "iam.serviceAccounts.list"
+      - "resourcemanager.projects.list"
+    members:
+       - "group:auditors@example.com"

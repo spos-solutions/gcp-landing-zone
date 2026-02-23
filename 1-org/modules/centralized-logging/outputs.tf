@@ -39,5 +39,6 @@ output "billing_sink_names" {
   value = {
     for key, options in local.destinations_options :
     key => "${coalesce(options.logging_sink_name, local.logging_sink_name_map[key])}-billing-${random_string.suffix.result}"
+    if options != null
   }
 }

@@ -17,12 +17,13 @@
 locals {
   env                       = "common"
   environment_code          = "c"
-  dns_bgp_asn_number        = var.enable_partner_interconnect ? "16550" : var.bgp_asn_dns
-  default_region1           = "us-west1"
-  default_region2           = "us-central1"
+  dns_bgp_asn_number        = var.bgp_asn_dns
+  default_region1           = "northamerica-northeast1"
+  default_region2           = "northamerica-northeast2"
   folder_prefix             = data.terraform_remote_state.bootstrap.outputs.common_config.folder_prefix
   dns_hub_project_id        = data.terraform_remote_state.org.outputs.dns_hub_project_id
-  interconnect_project_id   = data.terraform_remote_state.org.outputs.interconnect_project_id
+  # interconnect_project_id   = data.terraform_remote_state.org.outputs.interconnect_project_id
+  interconnect_project_id = ""
   parent_id                 = data.terraform_remote_state.bootstrap.outputs.common_config.parent_id
   bootstrap_folder_name     = data.terraform_remote_state.bootstrap.outputs.common_config.bootstrap_folder_name
   common_folder_name        = data.terraform_remote_state.org.outputs.common_folder_name

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-variable "enable_hub_and_spoke" {
-  description = "Enable Hub-and-Spoke architecture."
-  type        = bool
-  default     = false
+
+variable "billing_account_2" {
+  description = "Second billing account to use for specific projects (SCC, Secrets, KMS) to avoid quota limits."
+  type        = string
+  default     = ""
 }
 
 variable "domains_to_allow" {
@@ -103,47 +104,47 @@ variable "project_budget" {
   alert_spend_basis: The type of basis used to determine if spend has passed the threshold. Possible choices are `CURRENT_SPEND` or `FORECASTED_SPEND` (default).
   EOT
   type = object({
-    dns_hub_budget_amount                       = optional(number, 1000)
+    dns_hub_budget_amount                       = optional(number, 50)
     dns_hub_alert_spent_percents                = optional(list(number), [1.2])
     dns_hub_alert_pubsub_topic                  = optional(string, null)
     dns_hub_budget_alert_spend_basis            = optional(string, "FORECASTED_SPEND")
-    base_net_hub_budget_amount                  = optional(number, 1000)
+    base_net_hub_budget_amount                  = optional(number, 50)
     base_net_hub_alert_spent_percents           = optional(list(number), [1.2])
     base_net_hub_alert_pubsub_topic             = optional(string, null)
     base_net_hub_budget_alert_spend_basis       = optional(string, "FORECASTED_SPEND")
-    base_network_budget_amount                  = optional(number, 1000)
+    base_network_budget_amount                  = optional(number, 50)
     base_network_alert_spent_percents           = optional(list(number), [1.2])
     base_network_alert_pubsub_topic             = optional(string, null)
     base_network_budget_alert_spend_basis       = optional(string, "FORECASTED_SPEND")
-    restricted_net_hub_budget_amount            = optional(number, 1000)
+    restricted_net_hub_budget_amount            = optional(number, 50)
     restricted_net_hub_alert_spent_percents     = optional(list(number), [1.2])
     restricted_net_hub_alert_pubsub_topic       = optional(string, null)
     restricted_net_hub_budget_alert_spend_basis = optional(string, "FORECASTED_SPEND")
-    restricted_network_budget_amount            = optional(number, 1000)
+    restricted_network_budget_amount            = optional(number, 50)
     restricted_network_alert_spent_percents     = optional(list(number), [1.2])
     restricted_network_alert_pubsub_topic       = optional(string, null)
     restricted_network_budget_alert_spend_basis = optional(string, "FORECASTED_SPEND")
-    interconnect_budget_amount                  = optional(number, 1000)
+    interconnect_budget_amount                  = optional(number, 50)
     interconnect_alert_spent_percents           = optional(list(number), [1.2])
     interconnect_alert_pubsub_topic             = optional(string, null)
     interconnect_budget_alert_spend_basis       = optional(string, "FORECASTED_SPEND")
-    org_secrets_budget_amount                   = optional(number, 1000)
+    org_secrets_budget_amount                   = optional(number)
     org_secrets_alert_spent_percents            = optional(list(number), [1.2])
     org_secrets_alert_pubsub_topic              = optional(string, null)
     org_secrets_budget_alert_spend_basis        = optional(string, "FORECASTED_SPEND")
-    org_billing_logs_budget_amount              = optional(number, 1000)
+    org_billing_logs_budget_amount              = optional(number, 50)
     org_billing_logs_alert_spent_percents       = optional(list(number), [1.2])
     org_billing_logs_alert_pubsub_topic         = optional(string, null)
     org_billing_logs_budget_alert_spend_basis   = optional(string, "FORECASTED_SPEND")
-    org_audit_logs_budget_amount                = optional(number, 1000)
+    org_audit_logs_budget_amount                = optional(number, 50)
     org_audit_logs_alert_spent_percents         = optional(list(number), [1.2])
     org_audit_logs_alert_pubsub_topic           = optional(string, null)
     org_audit_logs_budget_alert_spend_basis     = optional(string, "FORECASTED_SPEND")
-    org_kms_budget_amount                       = optional(number, 1000)
+    org_kms_budget_amount                       = optional(number, 50)
     org_kms_alert_spent_percents                = optional(list(number), [1.2])
     org_kms_alert_pubsub_topic                  = optional(string, null)
     org_kms_budget_alert_spend_basis            = optional(string, "FORECASTED_SPEND")
-    scc_notifications_budget_amount             = optional(number, 1000)
+    scc_notifications_budget_amount             = optional(number, 50)
     scc_notifications_alert_spent_percents      = optional(list(number), [1.2])
     scc_notifications_alert_pubsub_topic        = optional(string, null)
     scc_notifications_budget_alert_spend_basis  = optional(string, "FORECASTED_SPEND")
@@ -271,4 +272,26 @@ variable "list_allowed_policy_member_domains" {
   description = "This list contains List of allowed policy member domains"
   type        = list(string)
   default     = []
+}
+
+variable "enable_hub_and_spoke" {
+  description = "Whether to enable hub and spoke architecture."
+  type        = bool
+  default     = false
+}
+variable "enable_scc_notification" {
+  description = "Enable SCC Notification"
+  type        = bool
+  default     = false
+}
+variable "enable_pubsub_log_sink" {
+  description = "Enable Pub/Sub log sink"
+  type        = bool
+  default     = false
+}
+
+variable "enable_bigquery_log_sink" {
+  description = "Enable BigQuery log sink (linked dataset)"
+  type        = bool
+  default     = false
 }

@@ -53,6 +53,8 @@ locals {
     "env" = distinct(concat([
       "roles/resourcemanager.tagUser",
       "roles/assuredworkloads.admin",
+      "roles/serviceusage.serviceUsageConsumer",
+      "roles/resourcemanager.organizationViewer",
     ], local.common_roles)),
     "net" = distinct(concat([
       "roles/accesscontextmanager.policyAdmin",
@@ -138,7 +140,7 @@ locals {
   }
 
   bootstrap_projects = {
-    "seed" = google_project.seed_bootstrap.project_id,
+    "seed" = module.seed_bootstrap.seed_project_id,
     "cicd" = local.cicd_project_id,
   }
 }
@@ -146,7 +148,7 @@ locals {
 resource "google_service_account" "terraform-env-sa" {
   for_each = local.granular_sa
 
-  project      = google_project.seed_bootstrap.project_id
+  project      = module.seed_bootstrap.seed_project_id
   account_id   = "sa-terraform-${each.key}"
   display_name = each.value
 }
@@ -177,7 +179,7 @@ module "seed_project_iam_member" {
 
   member      = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
   parent_type = "project"
-  parent_id   = google_project.seed_bootstrap.project_id
+  parent_id   = module.seed_bootstrap.seed_project_id
   roles       = each.value
 }
 
@@ -210,17 +212,17 @@ module "bootstrap_projects_remove_editor" {
   ]
 }
 
-# resource "google_billing_account_iam_member" "tf_billing_user" {
-#   for_each = local.granular_sa
+resource "google_billing_account_iam_member" "tf_billing_user" {
+  for_each = local.granular_sa
 
-#   billing_account_id = var.billing_account
-#   role               = "roles/billing.user"
-#   member             = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+  billing_account_id = var.billing_account
+  role               = "roles/billing.user"
+  member             = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
 
-#   depends_on = [
-#     google_service_account.terraform-env-sa
-#   ]
-# }
+  depends_on = [
+    google_service_account.terraform-env-sa
+  ]
+}
 
 # resource "google_billing_account_iam_member" "billing_admin_user" {
 #   for_each = local.granular_sa
@@ -238,3 +240,9 @@ module "bootstrap_projects_remove_editor" {
 #   role               = "roles/logging.configWriter"
 #   member             = "serviceAccount:${google_service_account.terraform-env-sa["org"].email}"
 # }
+
+resource "google_billing_account_iam_member" "admin_billing_user" {
+  billing_account_id = var.billing_account
+  role               = "roles/billing.user"
+  member             = "user:info@spossolutions.com"
+}

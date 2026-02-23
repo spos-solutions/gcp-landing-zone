@@ -48,10 +48,9 @@ module "project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.1"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  activate_apis            = distinct(concat(var.activate_apis, ["billingbudgets.googleapis.com"]))
   name                     = "${var.project_prefix}-${local.env_code}-${var.business_code}${var.project_suffix}"
+  project_id               = "${var.project_prefix}-${local.env_code}-${var.business_code}${var.project_suffix}"
+  activate_apis            = distinct(concat(var.activate_apis, ["billingbudgets.googleapis.com"]))
   org_id                   = var.org_id
   billing_account          = var.billing_account
   folder_id                = var.folder_id

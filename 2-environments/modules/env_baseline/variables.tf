@@ -24,6 +24,18 @@ variable "environment_code" {
   description = "A short form of the folder level resources (environment) within the Google Cloud organization (ex. d)."
 }
 
+variable "project_prefix" {
+  description = "Name prefix to use for projects created. Defaults to bootstrap state if not provided."
+  type        = string
+  default     = null
+}
+
+variable "enable_billing" {
+  description = "Enable billing account linkage and paid APIs/resources."
+  type        = bool
+  default     = true
+}
+
 variable "remote_state_bucket" {
   description = "Backend bucket to load Terraform Remote State Data from previous steps."
   type        = string
@@ -85,3 +97,10 @@ variable "assured_workload_configuration" {
   })
   default = {}
 }
+
+variable "enable_shared_vpc_service_project" {
+  description = "Enable shared VPC service project configuration."
+  type        = bool
+  default     = false
+}
+

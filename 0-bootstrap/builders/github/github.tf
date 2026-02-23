@@ -73,7 +73,7 @@ module "gh_cicd" {
   version = "~> 12.0"
 
   name              = "${var.project_prefix}-b-cicd-wif-gh"
-  random_project_id = true
+  project_id        = "${var.project_prefix}-b-cicd-wif-gh"
   org_id            = var.org_id
   folder_id         = google_folder.bootstrap.id
   billing_account   = var.billing_account

@@ -16,6 +16,15 @@
 
 #Groups creation resources
 
+# Enable Cloud Identity API before creating groups
+resource "google_project_service" "cloudidentity_api" {
+  project = var.groups.billing_project
+  service = "cloudidentity.googleapis.com"
+
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
 locals {
   required_groups_to_create = {
     for key, value in var.groups.required_groups : key => value
@@ -42,6 +51,8 @@ module "required_group" {
   description          = each.key
   initial_group_config = var.initial_group_config
   customer_id          = data.google_organization.org[0].directory_customer_id
+
+  depends_on = [google_project_service.cloudidentity_api]
 }
 
 module "optional_group" {
@@ -54,4 +65,6 @@ module "optional_group" {
   description          = each.key
   initial_group_config = var.initial_group_config
   customer_id          = data.google_organization.org[0].directory_customer_id
+
+  depends_on = [google_project_service.cloudidentity_api]
 }

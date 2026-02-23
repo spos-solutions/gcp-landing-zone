@@ -66,8 +66,9 @@ module "org_vm_external_ip_access" {
   source  = "terraform-google-modules/org-policy/google"
   version = "~> 5.1"
 
+  organization_id = local.organization_id
   folder_id       = local.folder_id
-  policy_for      = "folder"
+  policy_for      = local.policy_for
   policy_type     = "list"
   enforce         = "true"
   constraint      = "constraints/compute.vmExternalIpAccess"
@@ -78,9 +79,10 @@ module "org_policies_restrict_protocol_fowarding" {
   version = "~> 5.1"
   count   = var.enforce_restrict_protocol_fowarding_constraint ? 1 : 0 # Conditional creation
 
-  constraint        = "constraints/compute.restrictProtocolForwardingCreationForTypes"
-  policy_for        = "folder"
+  organization_id   = local.organization_id
   folder_id         = local.folder_id
+  constraint        = "constraints/compute.restrictProtocolForwardingCreationForTypes"
+  policy_for        = local.policy_for
   policy_type       = "list"
   # enforce           = "true"
   allow             = var.list_restrict_protocol_forwarding
@@ -97,8 +99,9 @@ module "org_policies_require_trusted_images" {
   version = "~> 5.1"
   count   = var.enforce_trusted_image_projects_constraint ? 1 : 0 # Conditional creation
 
-  policy_for        = "folder" # Should be "organization" or "folder"
+  organization_id   = local.organization_id
   folder_id         = local.folder_id
+  policy_for        = local.policy_for
   policy_type       = "list"
   constraint        = "constraints/compute.trustedImageProjects"
   allow_list_length = length(var.list_trusted_image_projects)
@@ -113,8 +116,9 @@ module "org_policies_restricted_loadbalancer_types" {
   version = "~> 5.1"
   count   = var.enforce_allowed_lb_types_constraint ? 1 : 0 # Conditional creation
 
-  folder_id         = local.folder_id  # Replace with your folder ID (if applicable)
-  policy_for        = local.policy_for # Set to "organization" or "folder"
+  organization_id   = local.organization_id
+  folder_id         = local.folder_id
+  policy_for        = local.policy_for
   policy_type       = "list"
   constraint        = "constraints/compute.restrictLoadBalancerCreationForTypes"
   exclude_folders   = []
@@ -130,11 +134,12 @@ module "org_policies_disable_guest_attribute_access" {
   version = "~> 5.1"
   count   = var.enforce_disable_guest_attribute_access_constraint ? 1 : 0 # Conditional creation
 
-  policy_for  = local.policy_for # Set to "organization" or "folder"
-  folder_id   = local.folder_id  # Replace with your folder ID (if applicable)
-  policy_type = "boolean"
-  enforce     = true # Enable and enforce the constraint
-  constraint  = "constraints/compute.disableGuestAttributesAccess"
+  organization_id = local.organization_id
+  folder_id       = local.folder_id
+  policy_for      = local.policy_for
+  policy_type     = "boolean"
+  enforce         = true # Enable and enforce the constraint
+  constraint      = "constraints/compute.disableGuestAttributesAccess"
 }
 
 # /******************************************
@@ -148,19 +153,19 @@ resource "time_sleep" "wait_logs_export" {
   ]
 }
 
-module "org_domain_restricted_sharing" {
-  source  = "terraform-google-modules/org-policy/google//modules/domain_restricted_sharing"
-  version = "~> 5.1"
+# module "org_domain_restricted_sharing" {
+#   source  = "terraform-google-modules/org-policy/google//modules/domain_restricted_sharing"
+#   version = "~> 5.1"
 
-  organization_id  = local.organization_id
-  folder_id        = local.folder_id
-  policy_for       = local.policy_for
-  domains_to_allow = var.domains_to_allow
+#   organization_id  = local.organization_id
+#   folder_id        = local.folder_id
+#   policy_for       = local.policy_for
+#   domains_to_allow = var.domains_to_allow
 
-  depends_on = [
-    time_sleep.wait_logs_export
-  ]
-}
+#   depends_on = [
+#     time_sleep.wait_logs_export
+#   ]
+# }
 
 # /******************************************
 #   Essential Contacts
@@ -169,8 +174,10 @@ module "org_domain_restricted_sharing" {
 module "domain_restricted_contacts" {
   source  = "terraform-google-modules/org-policy/google"
   version = "~> 5.1"
+
+  organization_id   = local.organization_id
   folder_id         = local.folder_id
-  policy_for        = "folder"
+  policy_for        = local.policy_for
   policy_type       = "list"
   allow_list_length = length(local.essential_contacts_domains_to_allow)
   allow             = local.essential_contacts_domains_to_allow
@@ -214,10 +221,11 @@ module "org_policies_resource_location_constraint" {
   version = ">= 3.77"                                        #"~> 3.0.2"
   count   = var.enforce_resource_location_constraint ? 1 : 0 # Conditional creation
 
-  constraint        = "constraints/gcp.resourceLocations"
+  organization_id   = local.organization_id
   folder_id         = local.folder_id
+  constraint        = "constraints/gcp.resourceLocations"
   policy_type       = "list"
-  policy_for        = "folder"
+  policy_for        = local.policy_for
   exclude_folders   = []
   allow             = var.allowed_gcp_resource_locations
   allow_list_length = length(var.allowed_gcp_resource_locations)

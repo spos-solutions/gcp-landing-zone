@@ -15,4 +15,4 @@
  */
 
 # We suggest you to use the same region from the 0-bootstrap step
-default_region = "northamerica-northeast2"
+default_region = "northamerica-northeast1"

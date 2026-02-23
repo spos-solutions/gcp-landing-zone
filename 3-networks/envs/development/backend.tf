@@ -16,7 +16,7 @@
 
 terraform {
   backend "gcs" {
-    bucket = "UPDATE_ME"
+    bucket = "bkt-spos-prj-b-seed-tfstate"
     prefix = "terraform/networks/development"
   }
 }

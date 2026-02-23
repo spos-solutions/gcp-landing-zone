@@ -202,6 +202,12 @@ variable "gh_token" {
   sensitive   = true
 }
 
+variable "setup_github_secrets" {
+  description = "Whether to set up GitHub Actions secrets. Set to true only when running locally."
+  type        = bool
+  default     = false
+}
+
 /* ----------------------------------------
     Specific to jenkins_bootstrap module
    ---------------------------------------- */

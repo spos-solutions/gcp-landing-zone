@@ -17,4 +17,4 @@
 # check this group is in actual use
 monitoring_workspace_users = "gcp-monitoring-admins@example.com"
 
-remote_state_bucket = "REMOTE_STATE_BUCKET"
+remote_state_bucket = "bkt-spos-prj-b-seed-tfstate"

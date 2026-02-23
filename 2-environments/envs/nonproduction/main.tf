@@ -19,6 +19,8 @@ module "env" {
 
   env                 = "nonproduction"
   environment_code    = "n"
+  project_prefix      = "prj-spos"
+  enable_billing      = false
   remote_state_bucket = var.remote_state_bucket
   tfc_org_name        = var.tfc_org_name
 }

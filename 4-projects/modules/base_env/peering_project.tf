@@ -63,7 +63,7 @@ module "base_peering_project" {
   primary_contact   = var.peering_project_config.primary_contact
   secondary_contact = var.peering_project_config.secondary_contact
   business_code     = var.business_code
-  folder_id         = var.peering_project_config.folder_id
+  folder_id         = try(var.peering_project_config.folder_id, local.env_folder_name)
   vpc_type          = "base"
 }
 
@@ -114,7 +114,7 @@ module "restricted_peering_project" {
   primary_contact   = var.peering_project_config.primary_contact
   secondary_contact = var.peering_project_config.secondary_contact
   business_code     = var.business_code
-  folder_id         = var.peering_project_config.folder_id
+  folder_id         = try(var.peering_project_config.folder_id, local.env_folder_name)
   vpc_type          = "restricted"
 }
 

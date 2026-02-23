@@ -167,6 +167,7 @@ locals {
 *****************************************/
 module "restricted_shared_vpc" {
   source = "../restricted_shared_vpc"
+  count  = local.restricted_project_id != null ? 1 : 0
 
   project_id                       = local.restricted_project_id
   dns_hub_project_id               = local.dns_hub_project_id

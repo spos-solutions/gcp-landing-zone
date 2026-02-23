@@ -16,7 +16,7 @@
 
 output "seed_project_id" {
   description = "Project where service accounts and core APIs will be enabled."
-  value       = google_project.seed_bootstrap.project_id
+  value       = module.seed_bootstrap.seed_project_id
 }
 
 output "bootstrap_step_terraform_service_account_email" {

@@ -19,6 +19,7 @@ locals {
 }
 
 resource "google_folder" "env_business_unit" {
+  count        = var.create_business_unit_folder ? 1 : 0
   display_name = local.env_business_unit_folder_name
   parent       = local.env_folder_name
 }

@@ -15,6 +15,7 @@
  */
 
 locals {
+  secondary_billing_account = var.billing_account_2 != "" ? var.billing_account_2 : local.billing_account
   hub_and_spoke_roles = [
     "roles/compute.instanceAdmin",
     "roles/iam.serviceAccountAdmin",
@@ -39,12 +40,11 @@ module "org_audit_logs" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-logging"
+  project_id               = "${local.project_prefix}-c-logging"
+  default_service_account  = "deprivilege"
   org_id                   = local.org_id
-  billing_account          = local.billing_account
+  billing_account          = local.secondary_billing_account
   folder_id                = google_folder.common.id
   activate_apis            = ["logging.googleapis.com", "bigquery.googleapis.com", "billingbudgets.googleapis.com"]
 
@@ -68,12 +68,11 @@ module "org_billing_logs" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-billing-logs"
+  project_id               = "${local.project_prefix}-c-billing-logs"
+  default_service_account  = "deprivilege"
   org_id                   = local.org_id
-  billing_account          = local.billing_account
+  billing_account          = local.secondary_billing_account
   folder_id                = google_folder.common.id
   activate_apis            = ["logging.googleapis.com", "bigquery.googleapis.com", "billingbudgets.googleapis.com"]
 
@@ -101,12 +100,11 @@ module "org_kms" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-kms"
+  project_id               = "${local.project_prefix}-c-kms"
+  default_service_account  = "deprivilege"
   org_id                   = local.org_id
-  billing_account          = local.billing_account
+  billing_account          = local.secondary_billing_account
   folder_id                = google_folder.common.id
   activate_apis            = ["logging.googleapis.com", "cloudkms.googleapis.com", "billingbudgets.googleapis.com"]
 
@@ -135,12 +133,11 @@ module "org_secrets" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-secrets"
+  project_id               = "${local.project_prefix}-c-secrets"
+  default_service_account  = "deprivilege"
   org_id                   = local.org_id
-  billing_account          = local.billing_account
+  billing_account          = local.secondary_billing_account
   folder_id                = google_folder.common.id
   activate_apis            = ["logging.googleapis.com", "secretmanager.googleapis.com", "billingbudgets.googleapis.com"]
 
@@ -168,14 +165,13 @@ module "interconnect" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-net-interconnect"
+  project_id               = "${local.project_prefix}-net-interconnect"
+  default_service_account  = "deprivilege"
   org_id                   = local.org_id
-  billing_account          = local.billing_account
+  billing_account          = null
   folder_id                = google_folder.network.id
-  activate_apis            = ["billingbudgets.googleapis.com", "compute.googleapis.com"]
+  activate_apis            = []
 
   labels = {
     environment       = "network"
@@ -187,10 +183,6 @@ module "interconnect" {
     env_code          = "net"
     vpc               = "none"
   }
-  budget_alert_pubsub_topic   = var.project_budget.interconnect_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.interconnect_alert_spent_percents
-  budget_amount               = var.project_budget.interconnect_budget_amount
-  budget_alert_spend_basis    = var.project_budget.interconnect_budget_alert_spend_basis
 }
 
 /******************************************
@@ -201,12 +193,11 @@ module "scc_notifications" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "keep"
   name                     = "${local.project_prefix}-c-scc"
+  project_id               = "${local.project_prefix}-c-scc"
+  default_service_account  = "keep"
   org_id                   = local.org_id
-  billing_account          = local.billing_account
+  billing_account          = local.secondary_billing_account
   folder_id                = google_folder.common.id
   activate_apis            = ["logging.googleapis.com", "pubsub.googleapis.com", "securitycenter.googleapis.com", "billingbudgets.googleapis.com", "cloudkms.googleapis.com"]
 
@@ -234,10 +225,9 @@ module "dns_hub" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-net-dns"
+  project_id               = "${local.project_prefix}-net-dns"
+  default_service_account  = "deprivilege"
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.network.id
@@ -276,22 +266,21 @@ module "base_network_hub" {
   version = "~> 14.0"
   count   = var.enable_hub_and_spoke ? 1 : 0
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-net-hub-base"
+  project_id               = "${local.project_prefix}-net-hub-base"
+  default_service_account  = "deprivilege"
   org_id                   = local.org_id
-  billing_account          = local.billing_account
+  billing_account          = null # local.billing_account
   folder_id                = google_folder.network.id
 
-  activate_apis = [
-    "compute.googleapis.com",
-    "dns.googleapis.com",
-    "servicenetworking.googleapis.com",
-    "logging.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "billingbudgets.googleapis.com"
-  ]
+  activate_apis = []
+  #   "compute.googleapis.com",
+  #   "dns.googleapis.com",
+  #   "servicenetworking.googleapis.com",
+  #   "logging.googleapis.com",
+  #   "cloudresourcemanager.googleapis.com",
+  #   "billingbudgets.googleapis.com"
+  # ]
 
   labels = {
     environment       = "network"
@@ -303,10 +292,10 @@ module "base_network_hub" {
     env_code          = "net"
     vpc               = "base"
   }
-  budget_alert_pubsub_topic   = var.project_budget.base_net_hub_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.base_net_hub_alert_spent_percents
-  budget_amount               = var.project_budget.base_net_hub_budget_amount
-  budget_alert_spend_basis    = var.project_budget.base_net_hub_budget_alert_spend_basis
+  # budget_alert_pubsub_topic   = var.project_budget.base_net_hub_alert_pubsub_topic
+  # budget_alert_spent_percents = var.project_budget.base_net_hub_alert_spent_percents
+  # budget_amount               = var.project_budget.base_net_hub_budget_amount
+  # budget_alert_spend_basis    = var.project_budget.base_net_hub_budget_alert_spend_basis
 }
 
 resource "google_project_iam_member" "network_sa_base" {
@@ -321,43 +310,42 @@ resource "google_project_iam_member" "network_sa_base" {
   Project for Restricted Network Hub
 *****************************************/
 
-module "restricted_network_hub" {
-  source  = "terraform-google-modules/project-factory/google"
-  version = "~> 14.0"
-  count   = (var.enable_hub_and_spoke && local.restricted_enabled) ? 1 : 0
+# module "restricted_network_hub" {
+#   source  = "terraform-google-modules/project-factory/google"
+#   version = "~> 14.0"
+#   count   = (var.enable_hub_and_spoke && local.restricted_enabled) ? 1 : 0
 
-  random_project_id        = true
-  random_project_id_length = 4
-  default_service_account  = "deprivilege"
-  name                     = "${local.project_prefix}-net-hub-restricted"
-  org_id                   = local.org_id
-  billing_account          = local.billing_account
-  folder_id                = google_folder.network.id
+#   name                     = "${local.project_prefix}-net-hub-restricted"
+#   project_id               = "${local.project_prefix}-net-hub-restricted"
+#   default_service_account  = "deprivilege"
+#   org_id                   = local.org_id
+#   billing_account          = local.billing_account
+#   folder_id                = google_folder.network.id
 
-  activate_apis = [
-    "compute.googleapis.com",
-    "dns.googleapis.com",
-    "servicenetworking.googleapis.com",
-    "logging.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "billingbudgets.googleapis.com"
-  ]
+#   activate_apis = [
+#     "compute.googleapis.com",
+#     "dns.googleapis.com",
+#     "servicenetworking.googleapis.com",
+#     "logging.googleapis.com",
+#     "cloudresourcemanager.googleapis.com",
+#     "billingbudgets.googleapis.com"
+#   ]
 
-  labels = {
-    environment       = "network"
-    application_name  = "org-net-hub-restricted"
-    billing_code      = "1234"
-    primary_contact   = "example1"
-    secondary_contact = "example2"
-    business_code     = "shared"
-    env_code          = "net"
-    vpc               = "restricted"
-  }
-  budget_alert_pubsub_topic   = var.project_budget.restricted_net_hub_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.restricted_net_hub_alert_spent_percents
-  budget_amount               = var.project_budget.restricted_net_hub_budget_amount
-  budget_alert_spend_basis    = var.project_budget.restricted_net_hub_budget_alert_spend_basis
-}
+#   labels = {
+#     environment       = "network"
+#     application_name  = "org-net-hub-restricted"
+#     billing_code      = "1234"
+#     primary_contact   = "example1"
+#     secondary_contact = "example2"
+#     business_code     = "shared"
+#     env_code          = "net"
+#     vpc               = "restricted"
+#   }
+#   budget_alert_pubsub_topic   = var.project_budget.restricted_net_hub_alert_pubsub_topic
+#   budget_alert_spent_percents = var.project_budget.restricted_net_hub_alert_spent_percents
+#   budget_amount               = var.project_budget.restricted_net_hub_budget_amount
+#   budget_alert_spend_basis    = var.project_budget.restricted_net_hub_budget_alert_spend_basis
+# }
 
 /************************************************************
   Base and Restricted Network Projects for each Environment
@@ -392,10 +380,10 @@ module "base_restricted_environment_network" {
   Roles granted to the networks SA for Hub and Spoke network topology
 *********************************************************************/
 
-resource "google_project_iam_member" "network_sa_restricted" {
-  for_each = toset(var.enable_hub_and_spoke && local.restricted_enabled ? local.hub_and_spoke_roles : [])
+# resource "google_project_iam_member" "network_sa_restricted" {
+#   for_each = toset(var.enable_hub_and_spoke && local.restricted_enabled ? local.hub_and_spoke_roles : [])
 
-  project = module.restricted_network_hub[0].project_id
-  role    = each.key
-  member  = "serviceAccount:${local.networks_step_terraform_service_account_email}"
-}
+#   project = module.restricted_network_hub[0].project_id
+#   role    = each.key
+#   member  = "serviceAccount:${local.networks_step_terraform_service_account_email}"
+# }

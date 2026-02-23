@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-location_kms = "northamerica-northeast2"
-location_gcs = "northamerica-northeast2"
+location_kms = "northamerica-northeast1"
+location_gcs = "northamerica-northeast1"

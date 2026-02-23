@@ -60,7 +60,7 @@ module "base_shared_vpc_project" {
   primary_contact   = var.service_project_config.primary_contact
   secondary_contact = var.service_project_config.secondary_contact
   business_code     = var.business_code
-  folder_id         = var.service_project_config.folder_id
+  folder_id         = try(var.service_project_config.folder_id, local.env_folder_name)
 }
 
 

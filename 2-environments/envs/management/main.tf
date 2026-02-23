@@ -15,7 +15,7 @@
  */
 
 locals {
-  management_enabled    = module.env_enabled.management_enabled
+  management_enabled    = true
 }
 
 module "env_enabled" {
@@ -32,4 +32,6 @@ module "env" {
   environment_code    = "m"
   remote_state_bucket = var.remote_state_bucket
   tfc_org_name        = var.tfc_org_name
+  project_prefix      = "prj-spos"
+  enable_billing      = false
 }

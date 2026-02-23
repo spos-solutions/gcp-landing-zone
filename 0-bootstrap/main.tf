@@ -43,84 +43,82 @@ resource "google_folder" "bootstrap" {
 #   byte_length = 2
 # }
 
-# Create seed project directly to avoid random_id issues
-resource "google_project" "seed_bootstrap" {
-  name            = "${var.project_prefix}-b-seed-spos"
-  project_id      = "${var.project_prefix}-b-seed-spos"
-  folder_id       = google_folder.bootstrap.id
-  billing_account = var.billing_account
+# Remove direct project creation - let bootstrap module handle it with fixed ID
+# resource "google_project" "seed_bootstrap" {
+#   name            = "${var.project_prefix}-b-seed-spos"
+#   project_id      = "${var.project_prefix}-b-seed-spos"
+#   folder_id       = google_folder.bootstrap.id
+#   billing_account = var.billing_account
 
-  labels = {
-    environment       = "bootstrap"
-    application_name  = "seed-bootstrap"
-    billing_code      = "1234"
-    primary_contact   = "example1"
-    secondary_contact = "example2"
-    business_code     = "shared"
-    env_code          = "b"
-  }
-}
+#   labels = {
+#     environment       = "bootstrap"
+#     application_name  = "seed-bootstrap"
+#     billing_code      = "1234"
+#     primary_contact   = "example1"
+#     secondary_contact = "example2"
+#     business_code     = "shared"
+#     env_code          = "b"
+#   }
+# }
 
-resource "google_project_service" "seed_bootstrap_apis" {
-  for_each = toset([
-    "serviceusage.googleapis.com",
-    "servicenetworking.googleapis.com",
-    "cloudkms.googleapis.com",
-    "compute.googleapis.com",
-    "logging.googleapis.com",
-    "bigquery.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "cloudbilling.googleapis.com",
-    "cloudbuild.googleapis.com",
-    "iam.googleapis.com",
-    "admin.googleapis.com",
-    "appengine.googleapis.com",
-    "storage-api.googleapis.com",
-    "monitoring.googleapis.com",
-    "pubsub.googleapis.com",
-    "securitycenter.googleapis.com",
-    "accesscontextmanager.googleapis.com",
-    "billingbudgets.googleapis.com",
-    "essentialcontacts.googleapis.com",
-    "assuredworkloads.googleapis.com",
-    "cloudasset.googleapis.com",
-    "cloudidentity.googleapis.com",
-    "networksecurity.googleapis.com",
-    "iamcredentials.googleapis.com",
-    "bigqueryconnection.googleapis.com",
-    "bigquerydatapolicy.googleapis.com",
-    "bigquerydatatransfer.googleapis.com",
-    "bigquerymigration.googleapis.com",
-    "bigqueryreservation.googleapis.com",
-    "bigquerystorage.googleapis.com",
-    "securitycentermanagement.googleapis.com"
-  ])
+# resource "google_project_service" "seed_bootstrap_apis" {
+#   for_each = toset([
+#     "serviceusage.googleapis.com",
+#     "servicenetworking.googleapis.com",
+#     "cloudkms.googleapis.com",
+#     "compute.googleapis.com",
+#     "logging.googleapis.com",
+#     "bigquery.googleapis.com",
+#     "cloudresourcemanager.googleapis.com",
+#     "cloudbilling.googleapis.com",
+#     "cloudbuild.googleapis.com",
+#     "iam.googleapis.com",
+#     "admin.googleapis.com",
+#     "appengine.googleapis.com",
+#     "storage-api.googleapis.com",
+#     "monitoring.googleapis.com",
+#     "pubsub.googleapis.com",
+#     "securitycenter.googleapis.com",
+#     "accesscontextmanager.googleapis.com",
+#     "billingbudgets.googleapis.com",
+#     "essentialcontacts.googleapis.com",
+#     "assuredworkloads.googleapis.com",
+#     "cloudasset.googleapis.com",
+#     "cloudidentity.googleapis.com",
+#     "networksecurity.googleapis.com",
+#     "iamcredentials.googleapis.com",
+#     "bigqueryconnection.googleapis.com",
+#     "bigquerydatapolicy.googleapis.com",
+#     "bigquerydatatransfer.googleapis.com",
+#     "bigquerymigration.googleapis.com",
+#     "bigqueryreservation.googleapis.com",
+#     "bigquerystorage.googleapis.com",
+#     "securitycentermanagement.googleapis.com"
+#   ])
 
-  project = google_project.seed_bootstrap.project_id
-  service = each.value
+#   project = google_project.seed_bootstrap.project_id
+#   service = each.value
 
-  disable_dependent_services = false
-  disable_on_destroy         = false
-}
+#   disable_dependent_services = false
+#   disable_on_destroy         = false
+# }
 
 module "seed_bootstrap" {
   source  = "terraform-google-modules/bootstrap/google"
   version = "~> 7.0"
 
-  org_id                         = var.org_id
-  folder_id                      = google_folder.bootstrap.id
-  project_id                     = google_project.seed_bootstrap.project_id
-  random_suffix                  = false
-  state_bucket_name              = "${var.bucket_prefix}-${var.project_prefix}-b-seed-tfstate"
-  force_destroy                  = var.bucket_force_destroy
-  billing_account                = var.billing_account
-  # Temporarily disable group IAM until groups are created
-  # group_org_admins               = var.groups.required_groups.group_org_admins
-  # group_billing_admins           = var.groups.required_groups.group_billing_admins
-  group_org_admins               = ""
-  group_billing_admins           = ""
+  org_id          = var.org_id
+  folder_id       = google_folder.bootstrap.id
+  project_id      = "${var.project_prefix}-b-seed-spos"  # Fixed project ID without random suffix
+  random_suffix   = false
+  state_bucket_name = "${var.bucket_prefix}-${var.project_prefix}-b-seed-tfstate"
+  force_destroy   = var.bucket_force_destroy
+  billing_account = var.billing_account
+  # No groups in standalone org, use service account
+  org_project_creators = local.step_terraform_sa
+  group_org_admins      = "serviceAccount:sa-terraform-bootstrap@prj-b-seed-spos.iam.gserviceaccount.com"
+  group_billing_admins  = "serviceAccount:sa-terraform-bootstrap@prj-b-seed-spos.iam.gserviceaccount.com"
   default_region                 = var.default_region
-  org_project_creators           = local.step_terraform_sa
   sa_enable_impersonation        = true
   create_terraform_sa            = false
   parent_folder                  = var.parent_folder == "" ? "" : local.parent
@@ -129,6 +127,11 @@ module "seed_bootstrap" {
   encrypt_gcs_bucket_tfstate     = true
   key_rotation_period            = "7776000s"
   kms_prevent_destroy            = !var.bucket_tfstate_kms_force_destroy
+
+  depends_on = [
+    module.required_group,
+    module.optional_group
+  ]
 
   project_labels = {
     environment       = "bootstrap"

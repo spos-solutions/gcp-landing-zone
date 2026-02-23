@@ -20,7 +20,7 @@ output "org_id" {
 }
 
 output "scc_notification_name" {
-  value = local.scc_notification_name
+  value       = local.scc_notification_name
   description = "Name of SCC Notification"
 }
 
@@ -64,15 +64,7 @@ output "org_kms_project_id" {
   description = "The org Cloud Key Management Service (KMS) project ID"
 }
 
-output "interconnect_project_id" {
-  value       = module.interconnect.project_id
-  description = "The Dedicated Interconnect project ID"
-}
 
-output "interconnect_project_number" {
-  value       = module.interconnect.project_number
-  description = "The Dedicated Interconnect project number"
-}
 
 output "scc_notifications_project_id" {
   value       = module.scc_notifications.project_id
@@ -88,44 +80,19 @@ output "dns_hub_project_id" {
   description = "The DNS hub project ID"
 }
 
-output "base_net_hub_project_id" {
-  value       = try(module.base_network_hub[0].project_id, null)
-  description = "The Base Network hub project ID"
-}
 
-output "restricted_net_hub_project_id" {
-  value       = try(module.restricted_network_hub[0].project_id, null)
-  description = "The Restricted Network hub project ID"
-}
 
-output "restricted_net_hub_project_number" {
-  value       = try(module.restricted_network_hub[0].project_number, null)
-  description = "The Restricted Network hub project number"
-}
 
 output "domains_to_allow" {
   value       = var.domains_to_allow
   description = "The list of domains to allow users from in IAM."
 }
 
-output "logs_export_pubsub_topic" {
-  value       = module.logs_export.pubsub_destination_name
-  description = "The Pub/Sub topic for destination of log exports"
-}
+
 
 output "logs_export_storage_bucket_name" {
   value       = module.logs_export.storage_destination_name
   description = "The storage bucket for destination of log exports"
-}
-
-output "logs_export_project_logbucket_name" {
-  description = "The resource name for the Log Bucket created for the project destination."
-  value       = module.logs_export.project_logbucket_name
-}
-
-output "logs_export_project_linked_dataset_name" {
-  description = "The resource name of the Log Bucket linked BigQuery dataset for the project destination."
-  value       = module.logs_export.project_linked_dataset_name
 }
 
 output "billing_sink_names" {
@@ -133,32 +100,69 @@ output "billing_sink_names" {
   description = "The name of the sinks under billing account level."
 }
 
+
+
 output "tags" {
   value       = local.tags_output
   description = "Tag Values to be applied on next steps."
 }
 
+
+
+# output "cai_monitoring_artifact_registry" {
+#   value       = module.cai_monitoring.artifact_registry_name
+#   description = "CAI Monitoring Cloud Function Artifact Registry name."
+# }
+
+# output "cai_monitoring_asset_feed" {
+#   value       = module.cai_monitoring.asset_feed_name
+#   description = "CAI Monitoring Cloud Function Organization Asset Feed name."
+# }
+
+# output "cai_monitoring_bucket" {
+#   value       = module.cai_monitoring.bucket_name
+#   description = "CAI Monitoring Cloud Function Source Bucket name."
+# }
+
+# output "cai_monitoring_topic" {
+#   value       = module.cai_monitoring.topic_name
+#   description = "CAI Monitoring Cloud Function Pub/Sub Topic name."
+# }
+
+# output "base_net_hub_project_id" {
+#   value       = try(module.base_network_hub[0].project_id, null)
+#   description = "The Base Network hub project ID"
+# }
+
+# output "restricted_net_hub_project_id" {
+#   value       = try(module.restricted_network_hub[0].project_id, null)
+#   description = "The Restricted Network hub project ID"
+# }
+
+# output "restricted_net_hub_project_number" {
+#   value       = try(module.restricted_network_hub[0].project_number, null)
+#   description = "The Restricted Network hub project number"
+# }
+
+# output "interconnect_project_id" {
+#   value       = module.interconnect.project_id
+#   description = "The Dedicated Interconnect project ID"
+# }
+
+# output "interconnect_project_number" {
+#   value       = module.interconnect.project_number
+#   description = "The Dedicated Interconnect project number"
+# }
+
 output "shared_vpc_projects" {
-  value       = { for k, v in module.base_restricted_environment_network : k => v }
-  description = "Base and restricted shared VPC Projects info grouped by environment (development, nonproduction, production)."
+  value = { for k, v in module.base_restricted_environment_network : k =>
+    {
+      base_shared_vpc_project_id             = v.base_shared_vpc_project_id
+      base_shared_vpc_project_number         = v.base_shared_vpc_project_number
+      restricted_shared_vpc_project_id       = v.restricted_shared_vpc_project_id
+      restricted_shared_vpc_project_number   = v.restricted_shared_vpc_project_number
+    }
+  }
+  description = "Project IDs and numbers for base and restricted shared VPCs."
 }
-
-output "cai_monitoring_artifact_registry" {
-  value       = module.cai_monitoring.artifact_registry_name
-  description = "CAI Monitoring Cloud Function Artifact Registry name."
-}
-
-output "cai_monitoring_asset_feed" {
-  value       = module.cai_monitoring.asset_feed_name
-  description = "CAI Monitoring Cloud Function Organization Asset Feed name."
-}
-
-output "cai_monitoring_bucket" {
-  value       = module.cai_monitoring.bucket_name
-  description = "CAI Monitoring Cloud Function Source Bucket name."
-}
-
-output "cai_monitoring_topic" {
-  value       = module.cai_monitoring.topic_name
-  description = "CAI Monitoring Cloud Function Pub/Sub Topic name."
-}
+output "access_context_manager_policy_id" { value = try(google_access_context_manager_access_policy.access_policy[0].name, "") }

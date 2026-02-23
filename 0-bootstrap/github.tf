@@ -130,6 +130,13 @@ resource "google_project_service" "gh_cicd_apis" {
 #   generate_project_id = false
 # }
 
+# Wait for IAM API to be fully enabled before creating WIF resources
+resource "time_sleep" "wait_for_iam_api" {
+  depends_on = [google_project_service.gh_cicd_apis["iam.googleapis.com"]]
+
+  create_duration = "30s"
+}
+
 module "gh_oidc" {
   source = "terraform-google-modules/github-actions-runners/google//modules/gh-oidc"
   version = "~> 3.1"
@@ -140,15 +147,19 @@ module "gh_oidc" {
   sa_mapping  = local.sa_mapping
   attribute_condition = "attribute.repository.startsWith(\"spos-solutions/\")"
 
-  depends_on = [google_project_service.gh_cicd_apis]
+  depends_on = [time_sleep.wait_for_iam_api]
 }
 
 resource "github_actions_secret" "secrets" {
-  for_each = local.gh_secrets
+  for_each = var.setup_github_secrets ? local.gh_secrets : {}
 
   repository      = each.value.repository
   secret_name     = each.value.secret_name
   plaintext_value = each.value.plaintext_value
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "google_service_account_iam_member" "self_impersonate" {

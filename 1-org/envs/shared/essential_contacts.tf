@@ -15,16 +15,16 @@
  */
 
 locals {
-  group_org_admins      = local.required_groups["group_org_admins"]
-  group_billing_admins  = local.required_groups["group_billing_admins"]
+  group_org_admins      = "info@spossolutions.com"
+  group_billing_admins  = "info@spossolutions.com"
   gcp_scc_admin         = var.gcp_groups.scc_admin == null ? local.group_org_admins : var.gcp_groups.scc_admin
   gcp_security_reviewer = var.gcp_groups.security_reviewer == null ? local.group_org_admins : var.gcp_groups.security_reviewer
   gcp_network_viewer    = var.gcp_groups.network_viewer == null ? local.group_org_admins : var.gcp_groups.network_viewer
 
   # Notification categories details: https://cloud.google.com/resource-manager/docs/managing-notification-contacts#notification-categories
   categories_map = {
-    "BILLING"         = setunion([local.group_billing_admins, local.required_groups["billing_data_users"]])
-    "LEGAL"           = setunion([local.group_org_admins, local.required_groups["audit_data_users"]])
+    "BILLING"         = [local.group_billing_admins]
+    "LEGAL"           = [local.group_org_admins]
     "PRODUCT_UPDATES" = [local.group_org_admins]
     "SECURITY"        = setunion([local.gcp_scc_admin, local.gcp_security_reviewer])
     "SUSPENSION"      = [local.group_org_admins]
@@ -39,7 +39,7 @@ locals {
 
 resource "google_essential_contacts_contact" "essential_contacts" {
   for_each                            = local.contacts_list
-  parent                              = local.parent
+  parent                              = "organizations/${local.org_id}"
   email                               = each.key
   language_tag                        = var.essential_contacts_language
   notification_category_subscriptions = each.value
