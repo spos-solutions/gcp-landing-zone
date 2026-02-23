@@ -58,3 +58,4 @@ local-overrides/
 # Build artifacts
 build/
 dist/
+1-org/envs/shared/state.json
